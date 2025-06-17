@@ -19,7 +19,7 @@ BASE_URL = "https://elaws.e-gov.go.jp/api/2"
 
 # ✅ APIごとの許可クエリパラメータ
 ALLOWED_PARAMS = {
-    "list_all_laws": ["target", "sort"],
+    "list_laws": ["target", "sort"],
     "search_laws": ["lawType", "year", "promulgationDate", "amendmentDate"],
     "get_law": ["type"]
 }
@@ -37,8 +37,8 @@ def resolve_law_identifier(args: dict, allow_revision_id: bool = True) -> Option
 async def list_tools() -> List[Tool]:
     return [
         Tool(
-            name="list_all_laws",
-            description="すべての法令IDとタイトル一覧を取得します（最大500件）。limit: 最大取得件数（最大500）\nqueryParameters（任意）: target（current または all）, sort（asc または desc）",
+            name="list_laws",
+            description=" 指定条件に該当する法令データの一覧を取得します。limit: 最大取得件数（最大500）\nqueryParameters（任意）: target（current または all）, sort（asc または desc）",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -106,8 +106,8 @@ async def list_tools() -> List[Tool]:
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> List[TextContent]:
     try:
-        if name == "list_all_laws":
-            result = await list_all_laws(**arguments)
+        if name == "list_laws":
+            result = await list_laws(**arguments)
         elif name == "search_laws":
             result = await search_laws(**arguments)
         elif name == "get_law":
@@ -128,10 +128,10 @@ def clean_query(name: str, query: Optional[Dict[str, Union[str, int]]]) -> Dict[
     return {k: v for k, v in (query or {}).items() if k in allow and v is not None}
 
 
-async def list_all_laws(limit: int = 100, queryParameters: Optional[Dict[str, Union[str, int]]] = None):
+async def list_laws(limit: int = 100, queryParameters: Optional[Dict[str, Union[str, int]]] = None):
     url = f"{BASE_URL}/laws"
     params = {"limit": limit}
-    params.update(clean_query("list_all_laws", queryParameters))
+    params.update(clean_query("list_laws", queryParameters))
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as resp:
             return await resp.json()
