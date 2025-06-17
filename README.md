@@ -17,23 +17,15 @@
 
 #### 3. get_law
 
-lawIdを指定して法令本文を取得します
+law_id, law_num, law_revision_id のいずれかを指定して法令本文を取得します
 
 #### 4. get_law_versions
 
-法令IDから法令の履歴一覧を取得します
+aw_id または law_num を指定して法令の履歴一覧を取得します
 
 #### 5. get_law_file
 
-lawIdを指定して法令ZIPファイルを取得します
-
-#### 6. get_law_file_text
-
-法令IDとバージョンを指定してXMLファイルを取得します
-
-#### 7. download_all_xml_zip
-
-すべての法令XMLファイルをZIP形式で一括ダウンロードします
+law_id, law_num, law_revision_id のいずれかを指定して法令本文ファイルを取得します
 
 ## 依存関係
 
