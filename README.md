@@ -19,7 +19,7 @@
 
 law_id, law_num, law_revision_id のいずれかを指定して法令本文を取得します
 
-#### 4. get_law_versions
+#### 4. get_law_revisions
 
 aw_id または law_num を指定して法令の履歴一覧を取得します
 
