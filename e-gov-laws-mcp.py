@@ -45,7 +45,10 @@ async def list_tools() -> List[Tool]:
                     "queryParameters": {
                         "type": "object",
                         "properties": {
-                            "law_num": {"type": "string"},
+                            "law_num": {
+                                "type": "string"},
+                                "description": "法令番号（部分一致）。例： 昭和二十二年政令第十六号"
+                            },
                             "law_num_era": {
                                 "type": "string",
                                 "enum": ["Meiji", "Taisho", "Showa", "Heisei", "Reiwa"],
@@ -91,7 +94,10 @@ async def list_tools() -> List[Tool]:
                     "queryParameters": {
                         "type": "object",
                         "properties": {
-                            "law_num": {"type": "string"},
+                            "law_num": {
+                                "type": "string"},
+                                "description": "法令番号（部分一致）。例： 昭和二十二年政令第十六号"
+                            },
                             "law_num_era": {
                                 "type": "string",
                                 "enum": ["Meiji", "Taisho", "Showa", "Heisei", "Reiwa"],
@@ -133,8 +139,14 @@ async def list_tools() -> List[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "law_id": {"type": "string"},
-                    "law_num": {"type": "string"},
+                    "law_id": {
+                        "type": "string"},
+                        "description": "法令ID。例： 322CO0000000016"
+                    },
+                    "law_num": {
+                        "type": "string"},
+                        "description": "法令番号。例： 昭和二十二年政令第十六号"
+                    },
                     "law_revision_id": {"type": "string"}
                 }
             }
@@ -145,8 +157,14 @@ async def list_tools() -> List[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "law_id": {"type": "string"},
-                    "law_num": {"type": "string"}
+                    "law_id": {
+                        "type": "string"},
+                        "description": "法令ID。例： 322CO0000000016"
+                    },
+                    "law_num": {
+                        "type": "string"},
+                        "description": "法令番号。例： 昭和二十二年政令第十六号"
+                    }
                 }
             }
         ),
