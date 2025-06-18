@@ -10,18 +10,17 @@ from mcp.server.models import InitializationOptions
 from mcp.types import Tool, TextContent
 from yarl import URL
 
-# ✅ サーバー名を修正
+# ✅ サーバー名
 server = Server("e-gov-laws-mcp")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://elaws.e-gov.go.jp/api/2"
 
-# ✅ APIごとの許可クエリパラメータ
+# ✅ APIごとの許可クエリパラメータ（https://laws.e-gov.go.jp/api/2/redoc より）
 ALLOWED_PARAMS = {
-    "list_laws": ["target", "sort"],
-    "search_laws": ["lawType", "year", "promulgationDate", "amendmentDate"],
-    "get_law": ["type"]
+    "list_laws": ["law_num", "law_title", "law_title_kana", "asof", "promulgation_date_from", "promulgation_date_to", "order"],
+    "search_laws": ["law_num", "law_title", "law_title_kana", "asof", "promulgation_date_from", "promulgation_date_to", "order"]
 }
 
 def resolve_law_identifier(args: dict, allow_revision_id: bool = True) -> Optional[str]:
@@ -38,7 +37,7 @@ async def list_tools() -> List[Tool]:
     return [
         Tool(
             name="list_laws",
-            description=" 指定条件に該当する法令データの一覧を取得します。limit: 最大取得件数（最大500）\nqueryParameters（任意）: target（current または all）, sort（asc または desc）",
+            description="指定条件に該当する法令データの一覧を取得します。最大件数は limit（最大500）で指定可能。",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -46,8 +45,35 @@ async def list_tools() -> List[Tool]:
                     "queryParameters": {
                         "type": "object",
                         "properties": {
-                            "target": {"type": "string", "enum": ["current", "all"]},
-                            "sort": {"type": "string", "enum": ["asc", "desc"]}
+                            "law_num": {"type": "string"},
+                            "law_num_era": {
+                                "type": "string",
+                                "enum": ["Meiji", "Taisho", "Showa", "Heisei", "Reiwa"],
+                                "description": "法令番号の元号（Meiji: 明治, Taisho: 大正, Showa: 昭和, Heisei: 平成, Reiwa: 令和）"
+                            },
+                            "law_title": {
+                                "type": "string",
+                                "description": "法令名又は法令略称（部分一致）"
+                            },
+                            "law_title_kana": {
+                                "type": "string",
+                                "description": "法令名読み（部分一致）"
+                            },
+                            "asof": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "法令の時点。例： 2023-07-01"
+                            },
+                            "promulgation_date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "公布日（指定値を含む、それ以後）。例： 2023-07-01"
+                            },
+                            "promulgation_date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "公布日（指定値を含む、それ以前）。例： 2023-07-01"
+                            }
                         },
                         "additionalProperties": False
                     }
@@ -61,7 +87,42 @@ async def list_tools() -> List[Tool]:
                 "type": "object",
                 "properties": {
                     "keyword": {"type": "string"},
-                    "limit": {"type": "integer", "default": 10}
+                    "limit": {"type": "integer", "default": 10},
+                    "queryParameters": {
+                        "type": "object",
+                        "properties": {
+                            "law_num": {"type": "string"},
+                            "law_num_era": {
+                                "type": "string",
+                                "enum": ["Meiji", "Taisho", "Showa", "Heisei", "Reiwa"],
+                                "description": "法令番号の元号（Meiji: 明治, Taisho: 大正, Showa: 昭和, Heisei: 平成, Reiwa: 令和）"
+                            },
+                            "law_title": {
+                                "type": "string",
+                                "description": "法令名又は法令略称（部分一致）"
+                            },
+                            "law_title_kana": {
+                                "type": "string",
+                                "description": "法令名読み（部分一致）"
+                            },
+                            "asof": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "法令の時点。例： 2023-07-01"
+                            },
+                            "promulgation_date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "公布日（指定値を含む、それ以後）。例： 2023-07-01"
+                            },
+                            "promulgation_date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "公布日（指定値を含む、それ以前）。例： 2023-07-01"
+                            }
+                        },
+                        "additionalProperties": False
+                    }
                 },
                 "required": ["keyword"]
             }
@@ -122,11 +183,9 @@ async def call_tool(name: str, arguments: dict) -> List[TextContent]:
         result = {"error": str(e)}
     return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
 
-
 def clean_query(name: str, query: Optional[Dict[str, Union[str, int]]]) -> Dict[str, Union[str, int]]:
     allow = ALLOWED_PARAMS.get(name, [])
     return {k: v for k, v in (query or {}).items() if k in allow and v is not None}
-
 
 async def list_laws(limit: int = 100, queryParameters: Optional[Dict[str, Union[str, int]]] = None):
     url = f"{BASE_URL}/laws"
@@ -136,7 +195,6 @@ async def list_laws(limit: int = 100, queryParameters: Optional[Dict[str, Union[
         async with session.get(url, params=params) as resp:
             return await resp.json()
 
-
 async def search_laws(keyword: str, limit: int = 10, queryParameters: Optional[Dict[str, Union[str, int]]] = None):
     url = f"{BASE_URL}/keyword"
     params = {"keyword": keyword, "limit": limit}
@@ -144,7 +202,6 @@ async def search_laws(keyword: str, limit: int = 10, queryParameters: Optional[D
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as resp:
             return await resp.json()
-
 
 async def get_law(**kwargs):
     law_key = resolve_law_identifier(kwargs)
@@ -155,7 +212,6 @@ async def get_law(**kwargs):
         async with session.get(url) as resp:
             return await resp.json()
 
-
 async def get_law_versions(**kwargs):
     law_key = resolve_law_identifier(kwargs, allow_revision_id=False)
     if not law_key:
@@ -164,7 +220,6 @@ async def get_law_versions(**kwargs):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             return await resp.json()
-
 
 async def get_law_file(**kwargs):
     law_key = resolve_law_identifier(kwargs)
@@ -181,7 +236,6 @@ async def get_law_file(**kwargs):
                 "data_base64": encoded
             }
 
-
 async def main():
     from mcp.server.stdio import stdio_server
     async with stdio_server() as (r, w):
@@ -196,7 +250,6 @@ async def main():
                 )
             )
         )
-
 
 if __name__ == "__main__":
     asyncio.run(main())
