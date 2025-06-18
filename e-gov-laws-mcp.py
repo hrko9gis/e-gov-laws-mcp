@@ -19,8 +19,9 @@ BASE_URL = "https://elaws.e-gov.go.jp/api/2"
 
 # ✅ APIごとの許可クエリパラメータ（https://laws.e-gov.go.jp/api/2/redoc より）
 ALLOWED_PARAMS = {
-    "list_laws": ["law_num", "law_title", "law_title_kana", "asof", "promulgation_date_from", "promulgation_date_to", "order"],
-    "search_laws": ["law_num", "law_title", "law_title_kana", "asof", "promulgation_date_from", "promulgation_date_to", "order"]
+    "list_laws": ["law_id", "law_num", "law_num_era", "law_num_type", "law_title", "law_title_kana", "amendment_date_from", "amendment_date_to", "amendment_law_id", "amendment_law_num", "amendment_law_title", "asof", "promulgation_date_from", "promulgation_date_to", "order"],
+    "search_laws": ["law_num", "law_num_era", "law_num_type", "law_title", "law_title_kana", "asof", "promulgation_date_from", "promulgation_date_to", "order"],
+    "get_law_revisions": ["law_title", "law_title_kana", "amendment_date_from", "amendment_date_to", "amendment_law_id", "amendment_law_num", "amendment_law_title", "amendment_promulgate_date_from", "amendment_promulgate_date_to", "remain_in_force", "repeal_date_from", "repeal_date_to"]
 }
 
 def resolve_law_identifier(args: dict, allow_revision_id: bool = True) -> Optional[str]:
@@ -37,7 +38,7 @@ async def list_tools() -> List[Tool]:
     return [
         Tool(
             name="list_laws",
-            description="指定条件に該当する法令データの一覧を取得します。最大件数は limit（最大500）で指定可能。",
+            description="指定条件に該当する法令データの一覧を取得します。",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -45,6 +46,10 @@ async def list_tools() -> List[Tool]:
                     "queryParameters": {
                         "type": "object",
                         "properties": {
+                            "law_id": {
+                                "type": "string"},
+                                "description": "法令ID。例： 322CO0000000016"
+                            },
                             "law_num": {
                                 "type": "string"},
                                 "description": "法令番号（部分一致）。例： 昭和二十二年政令第十六号"
@@ -54,6 +59,11 @@ async def list_tools() -> List[Tool]:
                                 "enum": ["Meiji", "Taisho", "Showa", "Heisei", "Reiwa"],
                                 "description": "法令番号の元号（Meiji: 明治, Taisho: 大正, Showa: 昭和, Heisei: 平成, Reiwa: 令和）"
                             },
+                            "law_num_type": {
+                                "type": "string",
+                                "enum": ["Constitution", "Act", "CabinetOrder", "ImperialOrder", "MinisterialOrdinance", "Rule"],
+                                "description": "法令番号の法令種別（Constitution: 憲法, Act: 法律, CabinetOrder: 政令, ImperialOrder: 勅令, MinisterialOrdinance: 府省令, Rule: 規則）"
+                            },
                             "law_title": {
                                 "type": "string",
                                 "description": "法令名又は法令略称（部分一致）"
@@ -61,6 +71,28 @@ async def list_tools() -> List[Tool]:
                             "law_title_kana": {
                                 "type": "string",
                                 "description": "法令名読み（部分一致）"
+                            },
+                            "amendment_date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "改正法令施行期日（指定値を含む、それ以後）。例： 2024-06-07"
+                            },
+                            "amendment_date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "改正法令施行期日（指定値を含む、それ以前）。例： 2024-06-07"
+                            },
+                            "amendment_law_id": {
+                                "type": "string"},
+                                "description": "改正法令の法令ID（部分一致）。例： 506AC0000000046"
+                            },
+                            "amendment_law_num": {
+                                "type": "string"},
+                                "description": "改正法令の法令番号（部分一致）。令和六年法律第四十六号"
+                            },
+                            "amendment_law_title": {
+                                "type": "string",
+                                "description": "改正法令の法令名（部分一致）"
                             },
                             "asof": {
                                 "type": "string",
@@ -76,6 +108,10 @@ async def list_tools() -> List[Tool]:
                                 "type": "string",
                                 "format": "date",
                                 "description": "公布日（指定値を含む、それ以前）。例： 2023-07-01"
+                            },
+                            "order": {
+                                "type": "string",
+                                "description": "並び順。返却値の項目を指定。先頭に+を付した場合は昇順、-の符号を付した場合は降順。符号がない場合は昇順。"
                             }
                         },
                         "additionalProperties": False
@@ -103,6 +139,11 @@ async def list_tools() -> List[Tool]:
                                 "enum": ["Meiji", "Taisho", "Showa", "Heisei", "Reiwa"],
                                 "description": "法令番号の元号（Meiji: 明治, Taisho: 大正, Showa: 昭和, Heisei: 平成, Reiwa: 令和）"
                             },
+                            "law_num_type": {
+                                "type": "string",
+                                "enum": ["Constitution", "Act", "CabinetOrder", "ImperialOrder", "MinisterialOrdinance", "Rule"],
+                                "description": "法令番号の法令種別（Constitution: 憲法, Act: 法律, CabinetOrder: 政令, ImperialOrder: 勅令, MinisterialOrdinance: 府省令, Rule: 規則）"
+                            },
                             "law_title": {
                                 "type": "string",
                                 "description": "法令名又は法令略称（部分一致）"
@@ -125,6 +166,10 @@ async def list_tools() -> List[Tool]:
                                 "type": "string",
                                 "format": "date",
                                 "description": "公布日（指定値を含む、それ以前）。例： 2023-07-01"
+                            },
+                            "order": {
+                                "type": "string",
+                                "description": "並び順。返却値の項目を指定。先頭に+を付した場合は昇順、-の符号を付した場合は降順。符号がない場合は昇順。"
                             }
                         },
                         "additionalProperties": False
@@ -152,7 +197,7 @@ async def list_tools() -> List[Tool]:
             }
         ),
         Tool(
-            name="get_law_versions",
+            name="get_law_revisions",
             description="法令の履歴一覧を取得します。law_id または law_num を指定してください。",
             inputSchema={
                 "type": "object",
@@ -164,7 +209,66 @@ async def list_tools() -> List[Tool]:
                     "law_num": {
                         "type": "string"},
                         "description": "法令番号。例： 昭和二十二年政令第十六号"
-                    }
+                    },
+                    "queryParameters": {
+                        "type": "object",
+                        "properties": {
+                            "law_title": {
+                                "type": "string",
+                                "description": "法令名又は法令略称（部分一致）"
+                            },
+                            "law_title_kana": {
+                                "type": "string",
+                                "description": "法令名読み（部分一致）"
+                            },
+                            "amendment_date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "改正法令施行期日（指定値を含む、それ以後）。例： 2024-06-07"
+                            },
+                            "amendment_date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "改正法令施行期日（指定値を含む、それ以前）。例： 2024-06-07"
+                            },
+                            "amendment_law_id": {
+                                "type": "string"},
+                                "description": "改正法令の法令ID（部分一致）。例： 506AC0000000046"
+                            },
+                            "amendment_law_num": {
+                                "type": "string"},
+                                "description": "改正法令の法令番号（部分一致）。令和六年法律第四十六号"
+                            },
+                            "amendment_law_title": {
+                                "type": "string",
+                                "description": "改正法令の法令名（部分一致）"
+                            },
+                            "amendment_promulgate_date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "改正法令公布日（指定値を含む、それ以後）。例： 2023-07-01"
+                            },
+                            "amendment_promulgate_date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "改正法令公布日（指定値を含む、それ以前）。例： 2023-07-01"
+                            },
+                            "remain_in_force": {
+                                "type": "boolean",
+                                "description": "廃止後の効力（true:廃止後でも効力を有するもの / false:廃止後に効力を有しないもの）。例： false"
+                            },
+                            "repeal_date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "廃止日（指定値を含む、それ以後）。例： 2024-04-01"
+                            },
+                            "repeal_date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "廃止日（指定値を含む、それ以前）。例： 2024-04-01"
+                            }
+                        },
+                        "additionalProperties": False
                 }
             }
         ),
@@ -191,8 +295,8 @@ async def call_tool(name: str, arguments: dict) -> List[TextContent]:
             result = await search_laws(**arguments)
         elif name == "get_law":
             result = await get_law(**arguments)
-        elif name == "get_law_versions":
-            result = await get_law_versions(**arguments)
+        elif name == "get_law_revisions":
+            result = await get_law_revisions(**arguments)
         elif name == "get_law_file":
             result = await get_law_file(**arguments)
         else:
@@ -230,13 +334,15 @@ async def get_law(**kwargs):
         async with session.get(url) as resp:
             return await resp.json()
 
-async def get_law_versions(**kwargs):
+async def get_law_revisions(**kwargs):
     law_key = resolve_law_identifier(kwargs, allow_revision_id=False)
     if not law_key:
         return {"error": "law_id または law_num を指定してください。"}
-    url = f"{BASE_URL}/law_versions/{law_key}"
+    url = f"{BASE_URL}/law_revisions/{law_key}"
+    params = {}
+    params.update(clean_query("get_law_revisions", queryParameters))
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
+        async with session.get(url, params=params) as resp:
             return await resp.json()
 
 async def get_law_file(**kwargs):
