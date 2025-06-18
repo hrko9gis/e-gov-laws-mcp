@@ -1,6 +1,6 @@
 # 法令データMCPサーバー
 
-法令APIを利用して、法令データを検索できるMCP（Model Context Protocol）サーバーです。
+デジタル庁が公開している法令APIを利用して、法令データを検索できるMCP（Model Context Protocol）サーバーです。
 
 ## 機能
 
