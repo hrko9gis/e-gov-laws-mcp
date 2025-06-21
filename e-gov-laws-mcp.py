@@ -47,11 +47,11 @@ async def list_tools() -> List[Tool]:
                         "type": "object",
                         "properties": {
                             "law_id": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "法令ID。例： 322CO0000000016"
                             },
                             "law_num": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "法令番号（部分一致）。例： 昭和二十二年政令第十六号"
                             },
                             "law_num_era": {
@@ -83,11 +83,11 @@ async def list_tools() -> List[Tool]:
                                 "description": "改正法令施行期日（指定値を含む、それ以前）。例： 2024-06-07"
                             },
                             "amendment_law_id": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "改正法令の法令ID（部分一致）。例： 506AC0000000046"
                             },
                             "amendment_law_num": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "改正法令の法令番号（部分一致）。令和六年法律第四十六号"
                             },
                             "amendment_law_title": {
@@ -131,7 +131,7 @@ async def list_tools() -> List[Tool]:
                         "type": "object",
                         "properties": {
                             "law_num": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "法令番号（部分一致）。例： 昭和二十二年政令第十六号"
                             },
                             "law_num_era": {
@@ -185,11 +185,11 @@ async def list_tools() -> List[Tool]:
                 "type": "object",
                 "properties": {
                     "law_id": {
-                        "type": "string"},
+                        "type": "string",
                         "description": "法令ID。例： 322CO0000000016"
                     },
                     "law_num": {
-                        "type": "string"},
+                        "type": "string",
                         "description": "法令番号。例： 昭和二十二年政令第十六号"
                     },
                     "law_revision_id": {"type": "string"}
@@ -198,17 +198,13 @@ async def list_tools() -> List[Tool]:
         ),
         Tool(
             name="get_law_revisions",
-            description="法令の履歴一覧を取得します。law_id または law_num を指定してください。",
+            description="法令の履歴一覧を取得します。law_id を指定してください。",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "law_id": {
-                        "type": "string"},
+                        "type": "string",
                         "description": "法令ID。例： 322CO0000000016"
-                    },
-                    "law_num": {
-                        "type": "string"},
-                        "description": "法令番号。例： 昭和二十二年政令第十六号"
                     },
                     "queryParameters": {
                         "type": "object",
@@ -232,11 +228,11 @@ async def list_tools() -> List[Tool]:
                                 "description": "改正法令施行期日（指定値を含む、それ以前）。例： 2024-06-07"
                             },
                             "amendment_law_id": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "改正法令の法令ID（部分一致）。例： 506AC0000000046"
                             },
                             "amendment_law_num": {
-                                "type": "string"},
+                                "type": "string",
                                 "description": "改正法令の法令番号（部分一致）。令和六年法律第四十六号"
                             },
                             "amendment_law_title": {
@@ -269,6 +265,7 @@ async def list_tools() -> List[Tool]:
                             }
                         },
                         "additionalProperties": False
+                    }
                 }
             }
         ),
@@ -334,11 +331,10 @@ async def get_law(**kwargs):
         async with session.get(url) as resp:
             return await resp.json()
 
-async def get_law_revisions(**kwargs):
-    law_key = resolve_law_identifier(kwargs, allow_revision_id=False)
-    if not law_key:
-        return {"error": "law_id または law_num を指定してください。"}
-    url = f"{BASE_URL}/law_revisions/{law_key}"
+async def get_law_revisions(law_id: str, queryParameters: Optional[Dict[str, Union[str, int]]] = None):
+    if not law_id:
+        return {"error": "law_id を指定してください。"}
+    url = f"{BASE_URL}/law_revisions/{law_id}"
     params = {}
     params.update(clean_query("get_law_revisions", queryParameters))
     async with aiohttp.ClientSession() as session:
