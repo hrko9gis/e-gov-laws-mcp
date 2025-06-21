@@ -21,7 +21,7 @@ law_id, law_num, law_revision_id のいずれかを指定して法令本文を�
 
 #### 4. get_law_revisions
 
-law_id または law_num を指定して法令の履歴一覧を取得します
+law_id を指定して法令の履歴一覧を取得します
 
 #### 5. get_law_file
 
